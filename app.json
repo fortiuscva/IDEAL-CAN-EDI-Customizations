@@ -1,0 +1,45 @@
+{
+  "id": "a2f8e0f3-a57a-4d52-9b95-41590cbf13b2",
+  "name": "EDI Customizations",
+  "publisher": "SSI",
+  "version": "1.0.0.0",
+  "brief": "",
+  "description": "",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [
+    {
+      "id": "fd33424b-edc5-4305-b680-6a0bd13c1578",
+      "name": "Lanham EDI",
+      "version": "21.2.3.1030",
+      "publisher": "Lanham Associates"
+    },
+    {
+      "id": "f8750ab4-1d72-455d-b773-5b487a0ac106",
+      "name": "Lanham E-Ship and E-Receive",
+      "version": "21.1.12.10",
+      "publisher": "Lanham Associates"
+    }
+  ],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "22.0.0.0",
+  "idRanges": [
+    {
+      "from": 50100,
+      "to": 50149
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "12.0",
+  "features": [
+    "NoImplicitWith"
+  ]
+}

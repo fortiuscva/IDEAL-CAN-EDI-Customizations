@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "SCALE_TESTING_DEV",
+            "request": "launch",
+            "type": "al",
+            "environmentType": "Sandbox",
+            "environmentName": "SCALE_TESTING_DEV",
+            "startupObjectId": 222,
+            "startupObjectType": "Table",
+            "tenant": "f91aec59-3217-462c-bd67-df1972f08bac",
+            "breakOnError": "All",
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+        },
+        {
+            "name": "IDEAL_DEV_050123",
+            "request": "launch",
+            "type": "al",
+            "environmentType": "Sandbox",
+            "environmentName": "IDEAL_DEV_050123",
+            "startupObjectId": 222,
+            "startupObjectType": "Table",
+            "tenant": "f91aec59-3217-462c-bd67-df1972f08bac",
+            "breakOnError": "All",
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+        }
+    ]
+}

@@ -8,7 +8,7 @@ pageextension 52600 "IDL Sales Order Subform" extends "Sales Order Subform"
             {
                 ApplicationArea = All;
                 ToolTip = 'Specifies the value of the EDI Qty Discr. field.';
-                Editable = false;
+                Editable = true;
             }
         }
     }

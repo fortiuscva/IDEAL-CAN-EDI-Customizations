@@ -7,5 +7,6 @@ tableextension 52600 "IDL Sales Line" extends "Sales Line"
             Caption = 'EDI Qty Discr.';
             DataClassification = ToBeClassified;
         }
+
     }
 }

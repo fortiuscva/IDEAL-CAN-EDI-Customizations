@@ -15,6 +15,15 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         LAXEDILoadFields.WriteEDIOutFields('E_SLSINV', LAXFieldType::"EDI Out", 'Bill of Lading No.', LAXDataType::Text, 'Bill of Lading No. (IDL)');
         LAXEDILoadFields.WriteEDIOutFields('E_SLSINV', LAXFieldType::"EDI Out", 'EDI Discount Code', LAXDataType::Text, 'EDI Discount Code (IDL)');
         LAXEDILoadFields.WriteEDIOutFields('E_SLSINV', LAXFieldType::"EDI Out", 'EDI Description', LAXDataType::Text, 'EDI Description (IDL)');
+
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Lading Quantity', LAXDataType::Integer, 'Lading Quantity (IDL)');
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Packages (Top Level)', LAXDataType::Integer, 'Packages (Top Level) (IDL)');
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Packages (Lower Level)', LAXDataType::Integer, 'Packages (Lower Level) (IDL)');
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Trans_Method', LAXDataType::Text, 'Trans_Method (IDL)');
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Master Pack', LAXDataType::Decimal, 'Master Pack (IDL)');
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'CTT*01', LAXDataType::Integer, 'CTT*01 (IDL)');
+
+
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"LAX EDI Sales Invoice Send", OnBeforeLoadEDIOut, '', false, false)]
@@ -99,6 +108,125 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         end;
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"LAX EDI ASN Send", OnBeforeLoadEDIOut, '', false, false)]
+    local procedure Cod14002358_OnBeforeLoadEDIOut(EDIElement: Record "LAX EDI Element"; BillOfLading: Record "LAX Bill of Lading"; BillOfLadingLine: Record "LAX Bill of Lading Line"; BillofLadingSummaryLine: Record "LAX BOL Summary Line"; var CustomEDIOut: Boolean; var BoolenVariable: Boolean; var DateVariable: Date; var IntegerVariable: Integer; var DecimalVariable: Decimal; var TimeVariable: Time; var DateTimeVariable: DateTime; i: Integer; var OutFldArray: array[100] of Text);
+    var
+        BOLInformationLineRecLcl: Record "LAX BOL Information Line";
+        BOLLineRecLcl: Record "LAX Bill of Lading Line";
+        LTLShipmentVarLcl: Boolean;
+        PostedPackLineRecLcl: Record "LAX Posted Package Line";
+        PostedPackLineRecLcl2: Record "LAX Posted Package Line";
+        ItemUOMRecLcl: Record "Item Unit of Measure";
+        SalesShptHeadRecLcl: Record "Sales Shipment Header";
+        SalesShptLineRecLcl: Record "Sales Shipment Line";
+        NoofShptLinesVarLcl: Integer;
+    begin
+        clear(LTLShipmentVarLcl);
+
+        BOLLineRecLcl.reset;
+        BOLLineRecLcl.SetRange("Bill of Lading No.", BillOfLading."No.");
+        BOLLineRecLcl.SetRange(Type, BOLLineRecLcl.Type::"Sales Shipment (Posted)");
+        if not BOLLineRecLcl.FindFirst() then
+            BOLLineRecLcl.init;
+
+        if not SalesShptHeadRecLcl.get(BOLLineRecLcl."No.") then
+            SalesShptHeadRecLcl.Init();
+
+
+        BOLInformationLineRecLcl.Reset();
+        BOLInformationLineRecLcl.SetRange("Bill of Lading No.", BOLLineRecLcl."Bill of Lading No.");
+        BOLInformationLineRecLcl.SetRange(Type, BOLInformationLineRecLcl.Type::"External Doc. No.");
+        BOLInformationLineRecLcl.SetRange("Info. Line Type", BOLInformationLineRecLcl."Info. Line Type"::"Cust. Order Info.");
+        if not BOLInformationLineRecLcl.FindFirst() then
+            BOLInformationLineRecLcl.Init();
+
+        if BOLInformationLineRecLcl."External Document No." <> '' then
+            LTLShipmentVarLcl := true;
+
+        case EDIElement."Field Name" of
+            'Packages (Top Level)':
+                begin
+                    OutFldArray[i] := '';
+                    IntegerVariable := BOLInformationLineRecLcl."Packages (Top Level)";
+                    CustomEDIOut := true;
+                end;
+            'Packages (Lower Level)':
+                begin
+                    OutFldArray[i] := '';
+                    IntegerVariable := BOLInformationLineRecLcl."Packages (Lower Level)";
+                    CustomEDIOut := true;
+                end;
+            'Lading Quantity':
+                begin
+                    OutFldArray[i] := '';
+                    if LTLShipmentVarLcl then
+                        DecimalVariable := BOLInformationLineRecLcl."Packages (Lower Level)"
+                    else
+                        DecimalVariable := BOLInformationLineRecLcl."Packages (Top Level)";
+                    CustomEDIOut := true;
+                end;
+            'Trans_Method':
+                begin
+                    OutFldArray[i] := '';
+                    if LTLShipmentVarLcl then
+                        OutFldArray[i] := 'M'
+                    else
+                        OutFldArray[i] := 'U';
+                    CustomEDIOut := true;
+                end;
+            'Master Pack':
+                begin
+                    OutFldArray[i] := '';
+                    PostedPackLineRecLcl.reset;
+                    PostedPackLineRecLcl.SetRange("Package No.", BillofLadingSummaryLine."Package No.");
+                    PostedPackLineRecLcl.SetRange("Line No.", BillofLadingSummaryLine."Package Line Line No.");
+                    if PostedPackLineRecLcl.FindFirst() then begin
+                        if PostedPackLineRecLcl.Type = PostedPackLineRecLcl.Type::Item then begin
+                            ItemUOMRecLcl.reset;
+                            ItemUOMRecLcl.SetRange("Item No.", PostedPackLineRecLcl."No.");
+                            ItemUOMRecLcl.SetRange(Code, 'MP');
+                            if ItemUOMRecLcl.FindFirst() then
+                                DecimalVariable := ItemUOMRecLcl."Qty. per Unit of Measure"
+                            else
+                                DecimalVariable := 1;
+                        end else begin
+                            if PostedPackLineRecLcl.Type = PostedPackLineRecLcl.Type::Package then begin
+                                PostedPackLineRecLcl2.SetRange("Posted Source ID", BillofLadingSummaryLine."Posted Source ID");
+                                //PostedPackLineRecLcl2.SetRange("Package No.", PostedPackLineRecLcl."No.");
+                                PostedPackLineRecLcl2.SetRange("No.", BillofLadingSummaryLine."Package Line No.");
+                                if PostedPackLineRecLcl2.FindFirst() then begin
+                                    ItemUOMRecLcl.reset;
+                                    ItemUOMRecLcl.SetRange("Item No.", PostedPackLineRecLcl2."No.");
+                                    ItemUOMRecLcl.SetRange(Code, 'MP');
+                                    if ItemUOMRecLcl.FindFirst() then
+                                        DecimalVariable := ItemUOMRecLcl."Qty. per Unit of Measure"
+                                    else
+                                        DecimalVariable := 1;
+                                end;
+                            end;
+                        end;
+                    end;
+                    CustomEDIOut := true;
+                end;
+            'CTT*01':
+                begin
+                    OutFldArray[i] := '';
+                    Clear(NoofShptLinesVarLcl);
+                    SalesShptLineRecLcl.reset;
+                    SalesShptLineRecLcl.SetRange("Document No.", SalesShptHeadRecLcl."No.");
+                    SalesShptLineRecLcl.SetRange(Type, SalesShptLineRecLcl.Type::Item);
+                    SalesShptLineRecLcl.SetFilter(Quantity, '<>%1', 0);
+                    if SalesShptLineRecLcl.FindSet() then
+                        repeat
+                            NoofShptLinesVarLcl += 1;
+                        until (SalesShptLineRecLcl.Next() = 0);
+                    IntegerVariable := NoofShptLinesVarLcl;
+                    CustomEDIOut := true;
+                end;
+        end;
+    end;
+
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"LAX EDI Create Sales Order", OnBeforeUpdateReceiveDocStatusFields, '', false, false)]
     local procedure cod14002365_OnBeforeUpdateReceiveDocStatusFields(var EDIRecDocHdr: Record "LAX EDI Receive Document Hdr.");
     Var
@@ -163,11 +291,15 @@ codeunit 52600 "IDL EDI Events & Subscribers"
 
     var
         EDIFunctionsGbl: Codeunit "IDL EDI Functions";
-        EDIQtyPriceDiscExistsErrMsg: Label 'One or more line(s) have qty. discrepancy';
-        LAXEDICreateSalesOrder: Codeunit "LAX EDI Create Sales Order";
-        EDISingleInstance: Codeunit "IDL EDI Single Instance";
+        EDIQtyPriceDiscExistsErrMsg:
+                Label 'One or more line(s) have qty. discrepancy';
+        LAXEDICreateSalesOrder:
+                Codeunit "LAX EDI Create Sales Order";
+        EDISingleInstance:
+                Codeunit "IDL EDI Single Instance";
 
-        PaymentTermsRecGbl: Record "Payment Terms";
+        PaymentTermsRecGbl:
+                Record "Payment Terms";
 
 
 

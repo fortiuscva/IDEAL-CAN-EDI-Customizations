@@ -38,13 +38,26 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                     OutFldArray[i] := EDISingleInstance.GetSAC01();
                     CustomEDIOut := true;
                 end;
+            'EDI Discount Code':
+                begin
+                    OutFldArray[i] := '';
+                    OutFldArray[i] := EDISingleInstance.GetEDIDiscountCode();
+                    CustomEDIOut := true;
+                end;
+            'EDI Description':
+                begin
+                    OutFldArray[i] := '';
+                    OutFldArray[i] := EDISingleInstance.GetEDIDescription();
+                    CustomEDIOut := true;
+                end;
+
             'TDS*04':
                 begin
                     OutFldArray[i] := '';
                     PaymentTermsRecGbl.reset;
                     if SalesInvoiceHeader."Payment Discount %" <> 0 then begin
-                        SalesInvoiceHeader.CalcFields("Amount Including VAT");
-                        DecimalVariable := SalesInvoiceHeader."Amount Including VAT" / SalesInvoiceHeader."Payment Discount %";
+                        SalesInvoiceHeader.CalcFields("Amount Including VAT", Amount);
+                        DecimalVariable := SalesInvoiceHeader.Amount * SalesInvoiceHeader."Payment Discount %" / 100;
                     end;
                     CustomEDIOut := true;
                 end;

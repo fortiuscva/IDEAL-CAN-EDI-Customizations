@@ -22,6 +22,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Trans_Method', LAXDataType::Text, 'Trans_Method (IDL)');
         LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'Master Pack', LAXDataType::Decimal, 'Master Pack (IDL)');
         LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'CTT*01', LAXDataType::Integer, 'CTT*01 (IDL)');
+        LAXEDILoadFields.WriteEDIOutFields('E_SLSASN', LAXFieldType::"EDI Out", 'CTT*02', LAXDataType::Integer, 'CTT*02 (IDL)');
 
 
     end;
@@ -73,11 +74,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
             'Tax %':
                 begin
                     OutFldArray[i] := '';
-                    SalesInvoiceLineRecLcl.Reset();
-                    SalesInvoiceLineRecLcl.SetRange("Document No.", SalesInvoiceHeader."No.");
-                    SalesInvoiceLineRecLcl.SetFilter("VAT %", '<>%1', 0);
-                    if SalesInvoiceLineRecLcl.FindFirst() then
-                        DecimalVariable := SalesInvoiceLineRecLcl."VAT %";
+                    DecimalVariable := EDISingleInstance.GetTaxPercent();
                     CustomEDIOut := true;
                 end;
             'Bill of Lading No.':
@@ -120,6 +117,8 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         SalesShptHeadRecLcl: Record "Sales Shipment Header";
         SalesShptLineRecLcl: Record "Sales Shipment Line";
         NoofShptLinesVarLcl: Integer;
+        ShptQtyVarLcl: Decimal;
+        TotalShptQtyVarLcl: Integer;
     begin
         clear(LTLShipmentVarLcl);
 
@@ -223,6 +222,24 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                     IntegerVariable := NoofShptLinesVarLcl;
                     CustomEDIOut := true;
                 end;
+            'CTT*02':
+                begin
+                    OutFldArray[i] := '';
+                    Clear(ShptQtyVarLcl);
+                    Clear(TotalShptQtyVarLcl);
+
+                    SalesShptLineRecLcl.reset;
+                    SalesShptLineRecLcl.SetRange("Document No.", SalesShptHeadRecLcl."No.");
+                    SalesShptLineRecLcl.SetRange(Type, SalesShptLineRecLcl.Type::Item);
+                    SalesShptLineRecLcl.SetFilter(Quantity, '<>%1', 0);
+                    if SalesShptLineRecLcl.FindSet() then
+                        repeat
+                            ShptQtyVarLcl += SalesShptLineRecLcl.Quantity;
+                        until (SalesShptLineRecLcl.Next() = 0);
+
+                    IntegerVariable := Round(ShptQtyVarLcl, 1.00, '=');
+                    CustomEDIOut := true;
+                end;
         end;
     end;
 
@@ -245,13 +262,22 @@ codeunit 52600 "IDL EDI Events & Subscribers"
     local procedure cod14002360_OnBeforeReadAssocTables(SalesInvoiceHeader: Record "Sales Invoice Header");
     begin
         EDISingleInstance.BuildBLDSalesInvoiceLines(SalesInvoiceHeader);
+        EDISingleInstance.BuildTaxAmountLines(SalesInvoiceHeader);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"LAX EDI Sales Invoice Send", OnBeforeNextEDISegment, '', false, false)]
     local procedure cod14002360_OnBeforeNextEDISegment(var EDISegment: Record "LAX EDI Segment"; LoopFinished: Boolean);
     begin
-        If EDISegment.Segment = 'SAC-DISC' then begin
+        if EDISegment.Segment = 'SAC-DISC' then begin
             if not EDISingleInstance.GetNextBLDSalesInvoiceLine() then
+                LoopFinished := true
+            else begin
+                EDISegment.Next(-1);
+                LoopFinished := false;
+            end;
+        end;
+        if EDISegment.Segment = 'TXI' then begin
+            if not EDISingleInstance.GetNextTaxAmountLine() then
                 LoopFinished := true
             else begin
                 EDISegment.Next(-1);
@@ -291,15 +317,10 @@ codeunit 52600 "IDL EDI Events & Subscribers"
 
     var
         EDIFunctionsGbl: Codeunit "IDL EDI Functions";
-        EDIQtyPriceDiscExistsErrMsg:
-                Label 'One or more line(s) have qty. discrepancy';
-        LAXEDICreateSalesOrder:
-                Codeunit "LAX EDI Create Sales Order";
-        EDISingleInstance:
-                Codeunit "IDL EDI Single Instance";
-
-        PaymentTermsRecGbl:
-                Record "Payment Terms";
+        EDIQtyPriceDiscExistsErrMsg: Label 'One or more line(s) have qty. discrepancy';
+        LAXEDICreateSalesOrder: Codeunit "LAX EDI Create Sales Order";
+        EDISingleInstance: Codeunit "IDL EDI Single Instance";
+        PaymentTermsRecGbl: Record "Payment Terms";
 
 
 

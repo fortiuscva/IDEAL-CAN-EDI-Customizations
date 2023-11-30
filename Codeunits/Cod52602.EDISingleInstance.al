@@ -45,6 +45,37 @@ codeunit 52602 "IDL EDI Single Instance"
         exit(true);
     end;
 
+    procedure BuildTaxAmountLines(SalesInvoiceHeader: Record "Sales Invoice Header")
+    begin
+        clear(TempSalesTaxAmtLine);
+        TempSalesTaxAmtLine.DeleteAll();
+
+        if SalesInvoiceHeader."Tax Area Code" <> '' then begin
+            TaxArea.Get(SalesInvoiceHeader."Tax Area Code");
+        end;
+
+        SalesTaxCalc.StartSalesTaxCalculation();
+        if TaxArea."Use External Tax Engine" then
+            SalesTaxCalc.CallExternalTaxEngineForDoc(DATABASE::"Sales Invoice Header", 0, SalesInvoiceHeader."No.")
+        else begin
+            SalesTaxCalc.AddSalesInvoiceLines(SalesInvoiceHeader."No.");
+            SalesTaxCalc.EndSalesTaxCalculation(SalesInvoiceHeader."Posting Date");
+        end;
+        SalesTaxCalc.GetSalesTaxAmountLineTable(TempSalesTaxAmtLine);
+        //SalesTaxCalc.GetSummarizedSalesTaxTable(TempSalesTaxAmtLine);
+        TempSalesTaxAmtLine.SetFilter("Tax %", '<>%1', 0);
+        if TempSalesTaxAmtLine.FindFirst() then;
+    end;
+
+    procedure GetNextTaxAmountLine(): Boolean
+    begin
+        if TempSalesTaxAmtLine.Next() = 0 then
+            exit(false);
+
+        exit(true);
+    end;
+
+
     procedure GetSACAmount(): Decimal;
     var
         SACAmountLcl: Decimal;
@@ -89,9 +120,22 @@ codeunit 52602 "IDL EDI Single Instance"
         exit(EDIDescriptionLcl);
     end;
 
+    procedure GetTaxPercent(): Decimal;
+    var
+        TaxPercentLcl: Decimal;
+    begin
+        Clear(TaxPercentLcl);
+        TaxPercentLcl := TempSalesTaxAmtLine."Tax %";
+        exit(TaxPercentLcl);
+    end;
+
 
     var
         OrigSalesInvoiceLine: Record "Sales Invoice Line";
         TempBLDSalesInvoiceLine: Record "Sales Invoice Line" temporary;
         BottomLineDiscRecGbl: Record "Bottom Line Discount";
+        SalesTaxCalc: Codeunit "Sales Tax Calculate";
+        TaxArea: Record "Tax Area";
+        TempSalesTaxAmtLine: Record "Sales Tax Amount Line" temporary;
+
 }

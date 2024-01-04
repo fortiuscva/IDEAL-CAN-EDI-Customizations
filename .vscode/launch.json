@@ -2,11 +2,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "SCALE_TESTING_DEV",
+            "name": "IDEAL_DEVELOPMENT",
             "request": "launch",
             "type": "al",
             "environmentType": "Sandbox",
-            "environmentName": "SCALE_TESTING_DEV",
+            "environmentName": "IDEAL_DEVELOPMENT",
             "startupObjectId": 222,
             "startupObjectType": "Table",
             "tenant": "f91aec59-3217-462c-bd67-df1972f08bac",

@@ -320,6 +320,11 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         end;
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"LAX EDI Sales Order Send", OnRunCodeunitPoAck, '', false, false)]
+    local procedure Cod14002359_OnRunCodeunitPoAck(var SalesHeader: Record "Sales Header"; var ExitCodeunit: Boolean; var ErrCode: Boolean);
+    begin
+        SalesHeader.TestField(Status, SalesHeader.Status::Released);
+    end;
 
     var
         EDIFunctionsGbl: Codeunit "IDL EDI Functions";

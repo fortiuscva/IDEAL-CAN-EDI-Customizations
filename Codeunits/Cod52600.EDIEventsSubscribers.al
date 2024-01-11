@@ -302,6 +302,9 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         IF SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
             if EDIFunctionsGbl.EDIQtyDiscLinesExist(SalesHeader) then
                 Error(EDIQtyPriceDiscExistsErrMsg);
+
+            if EDIFunctionsGbl.EDIPriceDiscLinesExist(SalesHeader) then
+                Error(EDIPriceDiscExistsErrMsg);
         end;
     end;
 
@@ -311,6 +314,9 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         IF SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
             if EDIFunctionsGbl.EDIQtyDiscLinesExist(SalesHeader) then
                 Error(EDIQtyPriceDiscExistsErrMsg);
+
+            if EDIFunctionsGbl.EDIPriceDiscLinesExist(SalesHeader) then
+                Error(EDIPriceDiscExistsErrMsg);
         end;
     end;
 
@@ -318,6 +324,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
     var
         EDIFunctionsGbl: Codeunit "IDL EDI Functions";
         EDIQtyPriceDiscExistsErrMsg: Label 'One or more line(s) have qty. discrepancy';
+        EDIPriceDiscExistsErrMsg: Label 'One or more line(s) have price discrepancy';
         LAXEDICreateSalesOrder: Codeunit "LAX EDI Create Sales Order";
         EDISingleInstance: Codeunit "IDL EDI Single Instance";
         PaymentTermsRecGbl: Record "Payment Terms";

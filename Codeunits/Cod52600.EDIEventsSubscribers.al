@@ -119,6 +119,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         NoofShptLinesVarLcl: Integer;
         ShptQtyVarLcl: Decimal;
         TotalShptQtyVarLcl: Integer;
+        LAXBOLSummaryLineRecLcl: Record "LAX BOL Summary Line";
     begin
         clear(LTLShipmentVarLcl);
 
@@ -210,6 +211,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
             'CTT*01':
                 begin
                     OutFldArray[i] := '';
+                    /*
                     Clear(NoofShptLinesVarLcl);
                     SalesShptLineRecLcl.reset;
                     SalesShptLineRecLcl.SetRange("Document No.", SalesShptHeadRecLcl."No.");
@@ -220,6 +222,12 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                             NoofShptLinesVarLcl += 1;
                         until (SalesShptLineRecLcl.Next() = 0);
                     IntegerVariable := NoofShptLinesVarLcl;
+                    */
+                    LAXBOLSummaryLineRecLcl.Reset();
+                    LAXBOLSummaryLineRecLcl.SetRange("Bill of Lading No.", BillOfLading."No.");
+                    LAXBOLSummaryLineRecLcl.SetRange("Bill of Lading Type", LAXBOLSummaryLineRecLcl."Bill of Lading Type"::"ASN (EDI)");
+                    if LAXBOLSummaryLineRecLcl.FindLast() then
+                        IntegerVariable := LAXBOLSummaryLineRecLcl."Line No.";
                     CustomEDIOut := true;
                 end;
             'CTT*02':
@@ -227,7 +235,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                     OutFldArray[i] := '';
                     Clear(ShptQtyVarLcl);
                     Clear(TotalShptQtyVarLcl);
-
+                    /*
                     SalesShptLineRecLcl.reset;
                     SalesShptLineRecLcl.SetRange("Document No.", SalesShptHeadRecLcl."No.");
                     SalesShptLineRecLcl.SetRange(Type, SalesShptLineRecLcl.Type::Item);
@@ -238,6 +246,23 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                         until (SalesShptLineRecLcl.Next() = 0);
 
                     IntegerVariable := Round(ShptQtyVarLcl, 1.00, '=');
+                    */
+                    /*
+                    LAXBOLSummaryLineRecLcl.Reset();
+                    LAXBOLSummaryLineRecLcl.SetRange("Bill of Lading No.", BillOfLading."No.");
+                    LAXBOLSummaryLineRecLcl.SetRange("Bill of Lading Type", LAXBOLSummaryLineRecLcl."Bill of Lading Type"::"ASN (EDI)");
+                    if LAXBOLSummaryLineRecLcl.FindSet() then
+                        repeat
+                            ShptQtyVarLcl += LAXBOLSummaryLineRecLcl."Summarized Quantity";
+                        until LAXBOLSummaryLineRecLcl.Next() = 0;
+                    IntegerVariable := Round(ShptQtyVarLcl, 1.00, '=');
+                    */
+                    LAXBOLSummaryLineRecLcl.Reset();
+                    LAXBOLSummaryLineRecLcl.SetRange("Bill of Lading No.", BillOfLading."No.");
+                    LAXBOLSummaryLineRecLcl.SetRange("Bill of Lading Type", LAXBOLSummaryLineRecLcl."Bill of Lading Type"::Standard);
+                    LAXBOLSummaryLineRecLcl.SetRange(Type, LAXBOLSummaryLineRecLcl.Type::"Bill of Lading");
+                    if LAXBOLSummaryLineRecLcl.FindFirst() then
+                        IntegerVariable := LAXBOLSummaryLineRecLcl."Package Line Quantity (Base)";
                     CustomEDIOut := true;
                 end;
         end;
@@ -276,7 +301,8 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                 LoopFinished := false;
             end;
         end;
-        if EDISegment.Segment = 'TXI' then begin
+        //if EDISegment.Segment = 'TXI' then begin
+        if EDISegment.Segment = 'TXI_Cust' then begin
             if not EDISingleInstance.GetNextTaxAmountLine() then
                 LoopFinished := true
             else begin
@@ -333,8 +359,5 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         LAXEDICreateSalesOrder: Codeunit "LAX EDI Create Sales Order";
         EDISingleInstance: Codeunit "IDL EDI Single Instance";
         PaymentTermsRecGbl: Record "Payment Terms";
-
-
-
-
+        ASNSednd: codeunit "LAX EDI ASN Send";
 }

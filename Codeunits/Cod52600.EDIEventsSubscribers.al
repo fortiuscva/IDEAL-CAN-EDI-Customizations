@@ -326,6 +326,33 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         SalesHeader.TestField(Status, SalesHeader.Status::Released);
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"LAX EDI WS Document Import", OnAfterValidateReferenceFields, '', false, false)]
+    local procedure OnAfterValidateReferenceFields(var EDIRecDocHdr: Record "LAX EDI Receive Document Hdr.");
+    var
+        EDIRecDocField: Record "LAX EDI Receive Document field";
+        VendorPONo: Code[55];
+        PurchaseHeader: Record "Purchase Header";
+        EDILocalization: codeunit "LAX EDI Load Text Fields";
+    begin
+        EDIRecDocField.Reset();
+        EDIRecDocField.SetRange("Internal Doc. No.", EDIRecDocHdr."Internal Doc. No.");
+        EDIRecDocField.SetRange("Table No.", Database::"LAX EDI Receive Document Hdr.");
+        EDIRecDocField.SetFilter(Document, '%1|%2', 'I_PURORD ', 'U_PURORD');
+        if EDIRecDocField.Find('-') then begin
+            VendorPONo := '';
+            repeat
+                if (EDIRecDocField."Table No." = Database::"Purchase Header") then begin
+                    case EDIRecDocField."Field No." of
+                        PurchaseHeader.FieldNo("No."):
+                            VendorPONo := EDILocalization.LoadTextFields(VendorPONo, EDIRecDocField);
+                    end;
+                end;
+            until EDIRecDocField.NEXT = 0;
+        end;
+        EDIRecDocHdr."IDL Vendor PO No." := CopyStr(VendorPONo, 1, MAXSTRLEN(EDIRecDocHdr."Vendor Invoice No."));
+        EDIRecDocHdr.Modify();
+    end;
+
     var
         EDIFunctionsGbl: Codeunit "IDL EDI Functions";
         EDIQtyPriceDiscExistsErrMsg: Label 'One or more line(s) have qty. discrepancy';

@@ -119,6 +119,7 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         NoofShptLinesVarLcl: Integer;
         ShptQtyVarLcl: Decimal;
         TotalShptQtyVarLcl: Integer;
+        LAXBOLSummaryLineRecLcl: Record "LAX BOL Summary Line";
     begin
         clear(LTLShipmentVarLcl);
 
@@ -227,7 +228,6 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                     OutFldArray[i] := '';
                     Clear(ShptQtyVarLcl);
                     Clear(TotalShptQtyVarLcl);
-
                     SalesShptLineRecLcl.reset;
                     SalesShptLineRecLcl.SetRange("Document No.", SalesShptHeadRecLcl."No.");
                     SalesShptLineRecLcl.SetRange(Type, SalesShptLineRecLcl.Type::Item);
@@ -276,7 +276,8 @@ codeunit 52600 "IDL EDI Events & Subscribers"
                 LoopFinished := false;
             end;
         end;
-        if EDISegment.Segment = 'TXI' then begin
+        //if EDISegment.Segment = 'TXI' then begin
+        if EDISegment.Segment = 'TXI_Cust' then begin
             if not EDISingleInstance.GetNextTaxAmountLine() then
                 LoopFinished := true
             else begin
@@ -333,8 +334,4 @@ codeunit 52600 "IDL EDI Events & Subscribers"
         LAXEDICreateSalesOrder: Codeunit "LAX EDI Create Sales Order";
         EDISingleInstance: Codeunit "IDL EDI Single Instance";
         PaymentTermsRecGbl: Record "Payment Terms";
-
-
-
-
 }
